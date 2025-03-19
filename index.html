@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IconFinder - Real-time Icon Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      :root {
+        --bg-gradient-start: #13151a;
+        --bg-gradient-end: #090a0f;
+        --card-color: rgba(30, 32, 40, 0.7);
+        --card-hover: rgba(40, 42, 55, 0.8);
+        --text-color: #f0f2f5;
+        --text-muted: #aab0c0;
+        --accent-color: #808080;
+        --accent-hover: #666666;
+        --accent-faded: rgba(128, 128, 128, 0.15);
+        --search-bg: rgba(30, 32, 40, 0.6);
+        --border-color: rgba(80, 85, 100, 0.2);
+        --border-hover: rgba(100, 105, 130, 0.4);
+        --button-bg: rgba(30, 32, 40, 0.7);
+        --button-hover: rgba(40, 45, 60, 0.9);
+        --tooltip-bg: rgba(25, 27, 35, 0.95);
+        --success-color: #3ddc84;
+        --slider-bg: rgba(60, 65, 80, 0.3);
+        --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.18);
+        --shadow-btn: 0 3px 8px rgba(128, 128, 128, 0.25);
+        --transition-fast: 0.15s ease;
+        --transition-normal: 0.25s ease;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+        color: var(--text-color);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.6;
+      }
+      header {
+        text-align: center;
+        padding: 3rem 1rem 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #fff 20%, var(--text-muted) 80%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+      }
+      h1 span {
+        background: linear-gradient(135deg, var(--accent-color), #b0b0b0);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 500px;
+        margin: 0 auto 2rem;
+      }
+      .search-container {
+        max-width: 650px;
+        margin: 1rem auto 2rem;
+        position: relative;
+      }
+      .search-bar {
+        width: 100%;
+        padding: 1.1rem 1.25rem 1.1rem 3.5rem;
+        border-radius: 18px;
+        background: var(--search-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-size: 1.05rem;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-md);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .search-bar:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px var(--accent-faded), var(--shadow-md);
+      }
+      .search-icon {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        pointer-events: none;
+        z-index: 100;
+        transition: color var(--transition-fast);
+      }
+      .search-container:focus-within .search-icon {
+        color: var(--accent-color);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem 2rem 3rem;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
+      .icon-card {
+        background: var(--card-color);
+        border-radius: 16px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        position: relative;
+        overflow: hidden;
+        animation: fadeIn 0.4s ease forwards;
+        opacity: 0;
+      }
+      .icon-card img {
+        filter: brightness(0) invert(1);
+        transition: transform var(--transition-normal);
+        width: 45px;
+        height: 45px;
+        margin-bottom: 1rem;
+        object-fit: contain;
+      }
+      .icon-card:hover {
+        transform: translateY(-5px);
+        background: var(--card-hover);
+        border-color: var(--border-hover);
+        box-shadow: var(--shadow-md);
+      }
+      .icon-card:hover img {
+        transform: scale(1.1);
+      }
+      .icon-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent-color), #b0b0b0);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+        border-radius: 3px 3px 0 0;
+      }
+      .icon-card:hover::after {
+        transform: scaleX(1);
+      }
+      .icon-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-muted);
+        transition: color var(--transition-fast);
+      }
+      .icon-card:hover .icon-name {
+        color: var(--text-color);
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(9, 10, 15, 0.85);
+        z-index: 100;
+        overflow-y: auto;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+      }
+      .modal-content {
+        background: linear-gradient(145deg, rgba(35, 38, 45, 0.85), rgba(25, 28, 35, 0.9));
+        border-radius: 24px;
+        width: 90%;
+        max-width: 580px;
+        margin: 4rem auto;
+        padding: 2.5rem;
+        position: relative;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        transform: translateY(0);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+      }
+      .close-modal {
+        position: absolute;
+        top: 1.2rem;
+        right: 1.2rem;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        background: rgba(30, 32, 40, 0.5);
+        border: none;
+        color: var(--text-muted);
+        border-radius: 50%;
+        transition: all var(--transition-fast);
+      }
+      .close-modal:hover {
+        background: rgba(255, 70, 70, 0.15);
+        color: #ff6b6b;
+        transform: rotate(90deg);
+      }
+      #modalTitle {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        color: white;
+        letter-spacing: -0.02em;
+      }
+      .modal-preview {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
+        padding: 2rem;
+        background: rgba(20, 22, 30, 0.4);
+        border-radius: 16px;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+      }
+      .color-preview {
+        width: 100%;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background var(--transition-normal);
+      }
+      .control-group {
+        margin-bottom: 1.8rem;
+      }
+      .control-label {
+        display: block;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--text-color);
+      }
+      .color-input {
+        display: flex;
+        align-items: center;
+      }
+      input[type="color"] {
+        -webkit-appearance: none;
+        border: none;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        background: transparent;
+        box-shadow: var(--shadow-sm);
+      }
+      input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 0;
+      }
+      input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 8px;
+      }
+      .color-value {
+        background: var(--search-bg);
+        border: 1px solid var(--border-color);
+        padding: 0.8rem 1rem;
+        border-radius: 12px;
+        margin-left: 1rem;
+        color: var(--text-color);
+        flex: 1;
+        font-family: 'SF Mono', 'Menlo', monospace;
+        letter-spacing: 0.05em;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-fast);
+      }
+      .color-value:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px var(--accent-faded);
+      }
+      .range-slider {
+        width: 100%;
+        margin-top: 0.8rem;
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 8px;
+        background: var(--slider-bg);
+        outline: none;
+        margin: 15px 0;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: all var(--transition-fast);
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        background: var(--accent-hover);
+      }
+      .format-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+      }
+      .format-btn {
+        background: var(--button-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        border-radius: 12px;
+        padding: 0.9rem 0.5rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        font-weight: 600;
+        font-size: 0.9rem;
+        box-shadow: var(--shadow-sm);
+      }
+      .format-btn:hover {
+        background: var(--button-hover);
+        color: var(--text-color);
+        border-color: var(--border-hover);
+      }
+      .format-btn.active {
+        background: var(--accent-faded);
+        color: var(--accent-color);
+        border-color: rgba(128, 128, 128, 0.3);
+      }
+      .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 2.5rem;
+      }
+      .action-btn {
+        padding: 1rem;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all var(--transition-normal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .action-btn i {
+        margin-right: 8px;
+      }
+      .copy-btn {
+        background: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+      }
+      .copy-btn:hover {
+        background: var(--button-hover);
+        border-color: var(--border-hover);
+        transform: translateY(-2px);
+      }
+      .download-btn {
+        background: linear-gradient(135deg, var(--accent-color), #b0b0b0);
+        color: white;
+        box-shadow: var(--shadow-btn);
+      }
+      .download-btn:hover {
+        background: linear-gradient(135deg, #b0b0b0, #a0a0a0);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 12px rgba(128, 128, 128, 0.4);
+      }
+      .tooltip {
+        position: fixed;
+        background: var(--tooltip-bg);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.2s;
+        z-index: 200;
+        transform: translateY(5px);
+        box-shadow: var(--shadow-md);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .status-message {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--tooltip-bg);
+        color: white;
+        padding: 1rem 1.8rem;
+        border-radius: 12px;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        z-index: 200;
+        box-shadow: var(--shadow-md);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 500;
+      }
+      .status-message.success {
+        background: linear-gradient(135deg, var(--success-color), #2abb6f);
+        border: 1px solid rgba(61, 220, 132, 0.3);
+      }
+      .loader {
+        display: none;
+        text-align: center;
+        padding: 3rem;
+      }
+      .loader-spinner {
+        display: inline-block;
+        position: relative;
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
+      }
+      .loader-spinner div {
+        position: absolute;
+        border: 3px solid var(--accent-color);
+        opacity: 1;
+        border-radius: 50%;
+        animation: loader-ripple 1.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+      }
+      .loader-spinner div:nth-child(2) {
+        animation-delay: -0.5s;
+      }
+      @keyframes loader-ripple {
+        0% {
+          top: 28px;
+          left: 28px;
+          width: 0;
+          height: 0;
+          opacity: 1;
+        }
+        100% {
+          top: -1px;
+          left: -1px;
+          width: 58px;
+          height: 58px;
+          opacity: 0;
+        }
+      }
+      .loader p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+      }
+      .empty-state {
+        grid-column: 1/-1;
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-muted);
+        background: var(--card-color);
+        border-radius: 16px;
+        border: 1px dashed var(--border-color);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+      }
+      .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+      .empty-state span {
+        font-size: 0.9rem;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(10, 12, 16, 0.5);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(80, 85, 110, 0.5);
+        border-radius: 5px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(100, 105, 130, 0.7);
+      }
+      #sizeValue {
+        display: inline-block;
+        background: var(--accent-faded);
+        color: var(--accent-color);
+        padding: 0.2rem 0.6rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-left: 0.3rem;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (max-width: 768px) {
+        header {
+          padding: 2rem 1rem 1.5rem;
+        }
+        h1 {
+          font-size: 2.5rem;
+        }
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+          padding: 1rem;
+          gap: 1rem;
+        }
+        .modal-content {
+          width: 95%;
+          padding: 1.8rem;
+          margin: 3rem auto;
+        }
+        .format-options {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .icon-card {
+          padding: 1.2rem 0.8rem;
+        }
+        .icon-card img {
+          width: 40px;
+          height: 40px;
+        }
+        .action-buttons {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 480px) {
+        header {
+          padding: 1.5rem 0.5rem 1rem;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        header p {
+          font-size: 1rem;
+        }
+        .search-bar {
+          padding: 0.9rem 1rem 0.9rem 3rem;
+          font-size: 0.95rem;
+        }
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          padding: 0.8rem 1rem 2rem;
+          gap: 0.75rem;
+        }
+        .icon-card {
+          padding: 1rem 0.5rem;
+        }
+        .icon-card img {
+          width: 35px;
+          height: 35px;
+        }
+        .modal-content {
+          margin: 2rem auto;
+          padding: 1.5rem;
+        }
+        .control-label {
+          font-size: 0.95rem;
+        }
+        .action-btn {
+          font-size: 0.9rem;
+          padding: 0.8rem;
+        }
+      }
+      @media (max-width: 480px) {
+        header {
+          padding: 1.5rem 0.5rem 1rem;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        header p {
+          font-size: 1rem;
+        }
+        .search-bar {
+          padding: 0.9rem 1rem 0.9rem 3rem;
+          font-size: 0.95rem;
+        }
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          padding: 0.8rem 1rem 2rem;
+          gap: 0.75rem;
+        }
+        .icon-card {
+          padding: 1rem 0.5rem;
+        }
+        .icon-card img {
+          width: 35px;
+          height: 35px;
+        }
+        .modal-content {
+          margin: 2rem auto;
+          padding: 1.5rem;
+        }
+        .control-label {
+          font-size: 0.95rem;
+        }
+        .action-btn {
+          font-size: 0.9rem;
+          padding: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Icon<span>Finder</span></h1>
+      <p>Search, customize, and download high-quality icons for your projects</p>
+      <div class="search-container">
+        <i class="fa-solid fa-search search-icon"></i>
+        <input type="text" class="search-bar" placeholder="Search for icons (e.g. arrow, user, chart)" id="searchInput" autocomplete="off" />
+      </div>
+    </header>
+    <div class="loader" id="loader">
+      <div class="loader-spinner"><div></div><div></div></div>
+      <p>Searching for perfect icons...</p>
+    </div>
+    <main class="grid" id="iconGrid">
+    </main>
+    <div class="modal" id="iconModal">
+      <div class="modal-content">
+        <button class="close-modal" id="closeModal">&times;</button>
+        <h2 id="modalTitle">Customize Icon</h2>
+        <div class="modal-preview">
+          <div class="color-preview" id="iconPreview">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Color</label>
+          <div class="color-input">
+            <input type="color" id="iconColor" value="#ffffff">
+            <input type="text" class="color-value" id="iconColorText" value="#ffffff">
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Size <span id="sizeValue">64</span>px</label>
+          <input type="range" min="16" max="512" value="64" class="range-slider" id="iconSize">
+        </div>
+        <div class="control-group">
+          <label class="control-label">Format</label>
+          <div class="format-options">
+            <button class="format-btn active" data-format="svg">SVG</button>
+            <button class="format-btn" data-format="png">PNG</button>
+            <button class="format-btn" data-format="jpg">JPG</button>
+            <button class="format-btn" data-format="webp">WEBP</button>
+            <button class="format-btn" data-format="ico">ICO</button>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn copy-btn" id="copyBtn">
+            <i class="fas fa-copy"></i> Copy to Clipboard
+          </button>
+          <button class="action-btn download-btn" id="downloadBtn">
+            <i class="fas fa-download"></i> Download Icon
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="status-message" id="statusMessage"></div>
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      const iconGrid = document.getElementById("iconGrid");
+      const loader = document.getElementById("loader");
+      const modal = document.getElementById("iconModal");
+      const closeModal = document.getElementById("closeModal");
+      const modalTitle = document.getElementById("modalTitle");
+      const iconPreview = document.getElementById("iconPreview");
+      const iconColor = document.getElementById("iconColor");
+      const iconColorText = document.getElementById("iconColorText");
+      const iconSize = document.getElementById("iconSize");
+      const sizeValue = document.getElementById("sizeValue");
+      const formatButtons = document.querySelectorAll(".format-btn");
+      const copyBtn = document.getElementById("copyBtn");
+      const downloadBtn = document.getElementById("downloadBtn");
+      const tooltip = document.getElementById("tooltip");
+      const statusMessage = document.getElementById("statusMessage");
+      let currentIcon = null;
+      let currentFormat = "svg";
+      let searchTimeout = null;
+      async function searchIcons(query) {
+        const url = `https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=50`;
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            showStatus("Search request failed", false);
+            return [];
+          }
+          const data = await response.json();
+          return data.icons || [];
+        } catch (error) {
+          console.error("Error fetching icons:", error);
+          showStatus("Error fetching icons", false);
+          return [];
+        }
+      }
+      function renderIcons(icons) {
+        iconGrid.innerHTML = "";
+        if (icons.length === 0) {
+          iconGrid.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-search"></i>
+              <p>No icons found</p>
+              <span>Try another search term or check your spelling</span>
+            </div>
+          `;
+          return;
+        }
+        icons.forEach(iconId => {
+          const [prefix, name] = iconId.split(":");
+          const imgSrc = `https://api.iconify.design/${prefix}:${name}.svg`;
+          const card = document.createElement("div");
+          card.className = "icon-card";
+          card.dataset.iconId = iconId;
+          card.dataset.prefix = prefix;
+          card.dataset.name = name;
+          const img = document.createElement("img");
+          img.src = imgSrc;
+          img.alt = name;
+          card.appendChild(img);
+          const label = document.createElement("div");
+          label.className = "icon-name";
+          label.textContent = name;
+          card.appendChild(label);
+          card.addEventListener("click", () => openModal(iconId, prefix, name, imgSrc));
+          iconGrid.appendChild(card);
+        });
+      }
+      function openModal(iconId, prefix, name, imgSrc) {
+        currentIcon = {
+          id: iconId,
+          prefix,
+          name,
+          src: imgSrc
+        };
+        modalTitle.textContent = `Customize "${name}" Icon`;
+        iconColor.value = "#ffffff";
+        iconColorText.value = "#ffffff";
+        iconSize.value = 64;
+        sizeValue.textContent = "64";
+        formatButtons.forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.format === "svg");
+        });
+        currentFormat = "svg";
+        updateIconPreview();
+        modal.style.display = "block";
+        const modalContent = document.querySelector(".modal-content");
+        modalContent.style.transform = "translateY(20px)";
+        setTimeout(() => {
+          modalContent.style.transform = "translateY(0)";
+        }, 50);
+      }
+      function updateIconPreview() {
+        if (!currentIcon) return;
+        const color = iconColor.value;
+        const size = iconSize.value;
+        const svgUrl = `https://api.iconify.design/${currentIcon.prefix}:${currentIcon.name}.svg?color=${encodeURIComponent(color)}&height=${size}`;
+        iconPreview.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = svgUrl;
+        img.alt = currentIcon.name;
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "100%";
+        iconPreview.appendChild(img);
+      }
+      async function copyToClipboard() {
+        if (!currentIcon) return;
+        try {
+          const color = iconColor.value;
+          const size = iconSize.value;
+          if (currentFormat === "svg") {
+            const svgUrl = `https://api.iconify.design/${currentIcon.prefix}:${currentIcon.name}.svg?color=${encodeURIComponent(color)}&height=${size}`;
+            const response = await fetch(svgUrl);
+            const svgText = await response.text();
+            await navigator.clipboard.writeText(svgText);
+            showStatus("SVG copied to clipboard", true);
+          } else {
+            showStatus("Only SVG format can be copied to clipboard", false);
+          }
+        } catch (error) {
+          console.error("Failed to copy:", error);
+          showStatus("Failed to copy to clipboard", false);
+        }
+      }
+      async function downloadIcon() {
+        if (!currentIcon) return;
+        const color = iconColor.value;
+        const size = parseInt(iconSize.value, 10);
+        const desiredFormat = currentFormat;
+        const fileName = `${currentIcon.name}.${desiredFormat}`;
+        const svgUrl = `https://api.iconify.design/${currentIcon.prefix}:${currentIcon.name}.svg?color=${encodeURIComponent(color)}&height=${size}`;
+        if (desiredFormat === "svg") {
+            try {
+              const response = await fetch(svgUrl, { mode: 'cors' });
+              if (!response.ok) {
+                showStatus("Download request failed", false);
+                return;
+              }
+              const svgText = await response.text();
+              const blob = new Blob([svgText], { type: "image/svg+xml" });
+              const blobUrl = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = blobUrl;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(blobUrl);
+              showStatus(`Icon downloaded as SVG`, true);
+            } catch (error) {
+              console.error("Error downloading SVG:", error);
+              showStatus("Error downloading icon", false);
+            }
+        } else {
+            try {
+              const response = await fetch(svgUrl, { mode: 'cors' });
+              if (!response.ok) {
+                showStatus("Download request failed", false);
+                return;
+              }
+              const svgText = await response.text();
+              const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+              const svgBlobUrl = URL.createObjectURL(svgBlob);
+              const img = new Image();
+              img.crossOrigin = "Anonymous";
+              img.onload = function() {
+                const canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext("2d");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                if (desiredFormat === "ico") {
+                  canvas.toBlob(async function(pngBlob) {
+                    try {
+                      const pngArrayBuffer = await pngBlob.arrayBuffer();
+                      const pngData = new Uint8Array(pngArrayBuffer);
+                      const icoSize = 6 + 16 + pngData.length;
+                      const icoBuffer = new ArrayBuffer(icoSize);
+                      const view = new DataView(icoBuffer);
+                      view.setUint16(0, 0, true);
+                      view.setUint16(2, 1, true);
+                      view.setUint16(4, 1, true);
+                      view.setUint8(6, size >= 256 ? 0 : size);
+                      view.setUint8(7, size >= 256 ? 0 : size);
+                      view.setUint8(8, 0);
+                      view.setUint8(9, 0);
+                      view.setUint16(10, 1, true);
+                      view.setUint16(12, 32, true);
+                      view.setUint32(14, pngData.length, true);
+                      view.setUint32(18, 6 + 16, true);
+                      const icoBytes = new Uint8Array(icoBuffer);
+                      icoBytes.set(pngData, 6 + 16);
+                      const icoBlob = new Blob([icoBuffer], { type: "image/x-icon" });
+                      const blobUrl = URL.createObjectURL(icoBlob);
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = fileName;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(blobUrl);
+                      showStatus(`Icon downloaded as ICO`, true);
+                    } catch (err) {
+                      console.error("Error converting PNG to ICO:", err);
+                      showStatus("Error downloading icon", false);
+                    }
+                  }, "image/png");
+                } else {
+                  let mimeType;
+                  if (desiredFormat === "jpg") {
+                    mimeType = "image/jpeg";
+                  } else if (desiredFormat === "webp") {
+                    mimeType = "image/webp";
+                  } else {
+                    mimeType = "image/png";
+                  }
+                  canvas.toBlob(function(blob) {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = blobUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                    showStatus(`Icon downloaded as ${desiredFormat.toUpperCase()}`, true);
+                  }, mimeType);
+                }
+                URL.revokeObjectURL(svgBlobUrl);
+              };
+              img.onerror = function(error) {
+                console.error("Image failed to load:", error);
+                showStatus("Error processing icon image", false);
+              };
+              img.src = svgBlobUrl;
+            } catch (error) {
+              console.error("Error converting SVG to image:", error);
+              showStatus("Error downloading icon", false);
+            }
+        }
+      }
+      function showStatus(message, isSuccess) {
+        statusMessage.textContent = message;
+        statusMessage.classList.toggle("success", isSuccess);
+        statusMessage.style.opacity = "1";
+        statusMessage.style.transform = "translateY(0)";
+        setTimeout(() => {
+          statusMessage.style.opacity = "0";
+          statusMessage.style.transform = "translateY(10px)";
+        }, 3000);
+      }
+      function showTooltip(event, text) {
+        tooltip.textContent = text;
+        tooltip.style.left = `${event.clientX + 10}px`;
+        tooltip.style.top = `${event.clientY + 10}px`;
+        tooltip.style.opacity = "1";
+        tooltip.style.transform = "translateY(0)";
+      }
+      function hideTooltip() {
+        tooltip.style.opacity = "0";
+        tooltip.style.transform = "translateY(5px)";
+      }
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim();
+        clearTimeout(searchTimeout);
+        if (!query) {
+          iconGrid.innerHTML = "";
+          return;
+        }
+        loader.style.display = "block";
+        iconGrid.style.display = "none";
+        searchTimeout = setTimeout(async () => {
+          const icons = await searchIcons(query);
+          loader.style.display = "none";
+          iconGrid.style.display = "grid";
+          renderIcons(icons);
+        }, 300);
+      });
+      closeModal.addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.style.display = "none";
+        }
+      });
+      iconColor.addEventListener("input", () => {
+        iconColorText.value = iconColor.value;
+        updateIconPreview();
+      });
+      iconColorText.addEventListener("input", () => {
+        const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        if (colorRegex.test(iconColorText.value)) {
+          iconColor.value = iconColorText.value;
+          updateIconPreview();
+        }
+      });
+      iconSize.addEventListener("input", () => {
+        sizeValue.textContent = iconSize.value;
+        updateIconPreview();
+      });
+      formatButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          formatButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentFormat = btn.dataset.format;
+        });
+      });
+      copyBtn.addEventListener("click", copyToClipboard);
+      downloadBtn.addEventListener("click", downloadIcon);
+      window.addEventListener("DOMContentLoaded", async () => {
+        if (!searchInput.value) {
+          searchInput.value = " ";
+        }
+      });
+    </script>
+  </body>
+</html>
